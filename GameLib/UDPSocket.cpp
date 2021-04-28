@@ -2,6 +2,7 @@
 
 UDPSocket::UDPSocket()
 {
+	udpSocket = new sf::UdpSocket();
 }
 
 UDPSocket::UDPSocket(sf::UdpSocket* _udpSocket)
@@ -26,25 +27,33 @@ Status UDPSocket::Send(sf::Packet& _packet, const std::string ip, const Port por
 
 Status UDPSocket::Send(OutputMemoryStream& _oms, const std::string ip, const Port port)
 {
-	return Status();
+	return GetStatus(udpSocket->send(_oms.GetBufferPtr(), _oms.GetLength(), ip, port));
 }
 
 Status UDPSocket::Receive(sf::Packet& _pack, std::string& ip, Port& port)
 {
-	return Status();
+	return GetStatus(udpSocket->receive(_pack, sf::IpAddress(ip), port));
 }
 
-Status UDPSocket::Receive(InputMemoryStream* _ims, std::string& ip, Port& port)
+Status UDPSocket::Receive(InputMemoryStream*& _ims, std::string& ip, Port& port)
 {
-	return Status();
+	char data[1000];
+	size_t t(1000);
+	size_t receivedSize;
+
+	Status s = GetStatus(udpSocket->receive(data, t, receivedSize, sf::IpAddress(ip), port));
+
+	_ims = new InputMemoryStream(data, receivedSize);
+
+	return s;
 }
 
 Status UDPSocket::Bind(Port port)
 {
-	return Status();
+	return GetStatus(udpSocket->bind(port));
 }
 
 Port UDPSocket::GetLocalPort()
 {
-	return Port();
+	return udpSocket->getLocalPort();
 }

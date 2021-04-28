@@ -5,6 +5,7 @@
 
 #define MAX_MENSAJES 30
 
+/*
 
 int main()
 {
@@ -86,3 +87,4 @@ int main()
 	}
 	
 }
+*/

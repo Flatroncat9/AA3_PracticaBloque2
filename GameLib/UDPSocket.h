@@ -18,7 +18,7 @@ public:
 	Status Send(OutputMemoryStream& _oms, const std::string ip, const Port port);
 
 	Status Receive(sf::Packet& _pack, std::string& ip, Port &port);
-	Status Receive(InputMemoryStream* _ims, std::string& ip, Port& port);
+	Status Receive(InputMemoryStream*& _ims, std::string& ip, Port& port);
 
 	Status Bind(Port port);
 	Port GetLocalPort();

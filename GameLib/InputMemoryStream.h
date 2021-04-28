@@ -21,6 +21,11 @@ public:
 
 	}
 
+	char* GetBuffer() 
+	{
+		return mBuffer;
+	}
+
 	void Read(void* _outData, size_t _inByteCount)
 	{
 		//Después de haber leído, la posición del siguiente dato a leer quedará en resultHead
