@@ -57,7 +57,11 @@ static Status GetStatus(sf::Socket::Status _status)
 
 enum class Message_Protocol
 {
-    
+    HELLO,
+    CH,
+    CHR,
+    WELCOME,
+    NEWPLAYER
 };
 
 static std::string GetMessageProtocolFrom(Message_Protocol index)
