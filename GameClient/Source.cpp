@@ -6,6 +6,12 @@
 
 
 //client
+// send hello_ nik to the server until he recieves challenge
+// when recive challenge responds with challengeResponse
+// waits for welcome, but if he receive again the challenge he sends the challengeRespons again untel recieve Welcome_id
+// when receive Welocome_id player sets is id and wait for other players
+
+
 int main()
 {
 	UDPSocket clientSock;
@@ -13,7 +19,7 @@ int main()
 	//std::cin >> message;
 
 	OutputMemoryStream output;
-	output.Write(5);
+	output.Write(65000);
 
 	// OutputStream, ip, port
 	clientSock.Send(output, "localhost", 50000);

@@ -68,5 +68,11 @@ public:
 		Write(&_data, sizeof(_data));
 	}
 
+	void Write(std::string _data)
+	{
+		size_t size = sizeof(_data);
+
+	}
+
 
 };

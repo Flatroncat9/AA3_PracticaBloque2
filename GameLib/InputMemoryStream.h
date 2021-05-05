@@ -56,6 +56,10 @@ public:
 		Read(_outData, sizeOf);
 	}
 
+	void Read(std::string* _outData)
+	{
+
+	}
 
 };
 
