@@ -5,7 +5,7 @@
 #include <UDPSocket.h>
 
 
-
+//client
 int main()
 {
 	UDPSocket clientSock;

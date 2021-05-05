@@ -7,10 +7,17 @@
 
 #define PORT 50000
 
+//Server
 int main()
 {
-	
 	UDPSocket serverSock;
+	/*Status *status;
+	do
+	{
+		if(status != nullptr) 
+		status = new Status(serverSock.Bind(PORT));
+	} while (*status == Status::Error);
+	*/
 	serverSock.Bind(PORT);
 
 	InputMemoryStream* input;
