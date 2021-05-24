@@ -142,7 +142,7 @@ public:
 	}
 
 
-	void WriteString(std::string _inData, size_t _inBitCount) 
+	void WriteString(std::string _inData, uint32_t _inBitCount) 
 	{
 		Write(_inData.size(), _inBitCount);
 		for (size_t i = 0; i < _inData.size(); i++)

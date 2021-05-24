@@ -26,18 +26,22 @@ int main()
 
 	std::cout << BIND_CORRECT;
 
-	InputMemoryBitStream* input;
-	std::string ip;
-	Port p;
+	while (true)
+	{
+		InputMemoryBitStream* input;
+		std::string ip;
+		Port p;
 
-	serverSock.Receive(input, ip, p);
+		Status s = serverSock.Receive(input, ip, p);
 
-	std::string i;
-	input->ReadString(i, 8);
+		std::string i;
+		input->ReadString(i, 8);
 
-	std::cout << ip << "_" << p << "  " << i << "\n";
+		std::cout << ip << "_" << p << "  " << i << "\n";
 
-	PlayerInfo playerInfo;
+		PlayerInfo playerInfo;
+	}
+	
 
 	system("pause");
 	return 0;

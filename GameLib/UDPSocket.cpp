@@ -1,4 +1,5 @@
 #include "UDPSocket.h"
+#define DATA_SIZE 65507
 
 UDPSocket::UDPSocket()
 {
@@ -27,7 +28,7 @@ Status UDPSocket::Send(sf::Packet& _packet, const std::string ip, const Port por
 
 Status UDPSocket::Send(OutputMemoryBitStream& _oms, const std::string ip, const Port port)
 {
-	return GetStatus(udpSocket->send(_oms.GetBufferPtr(), _oms.GetByteLength(), ip, port));
+	return GetStatus(udpSocket->send(_oms.GetBufferPtr(), _oms.GetBitLength(), ip, port));
 }
 
 Status UDPSocket::Receive(sf::Packet& _pack, std::string& ip, Port& port)
@@ -37,15 +38,11 @@ Status UDPSocket::Receive(sf::Packet& _pack, std::string& ip, Port& port)
 
 Status UDPSocket::Receive(InputMemoryBitStream*& _ims, std::string& ip, Port& port)
 {
-	char data[1000];
-	size_t t(1000);
+	char data[DATA_SIZE];
 	size_t receivedSize;
 	sf::IpAddress address;
-
-	Status s = GetStatus(udpSocket->receive(data, t, receivedSize, address, port));
-
+	Status s = GetStatus(udpSocket->receive(&data, udpSocket->MaxDatagramSize, receivedSize, address, port));
 	ip = address.toString();
-
 	_ims = new InputMemoryBitStream(data, receivedSize);
 
 	return s;

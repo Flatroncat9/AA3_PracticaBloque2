@@ -85,9 +85,9 @@ public:
 		ReadBits(_inData, _inBitCount);
 	}
 
-	void ReadString(std::string _inData, uint32_t _inBitCount)
+	void ReadString(std::string& _inData, uint32_t _inBitCount)
 	{
-		_inData = 0;
+		_inData = "";
 		size_t size = 0;
 		Read(&size, _inBitCount);
 		for (size_t i = 0; i < size; i++)
@@ -96,7 +96,6 @@ public:
 			Read(&c, 8);
 			_inData += c;
 		}
-		system("pause");
 	}
 
 	
