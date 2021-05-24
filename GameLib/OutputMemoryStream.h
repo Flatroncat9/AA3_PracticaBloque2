@@ -70,8 +70,24 @@ public:
 
 	void Write(std::string _data)
 	{
-		size_t size = sizeof(_data);
+		/*for (int i = 0; i < _data.size(); i++) {
+			Write(_data.c_str(), _data.size());
+		}*/
+		int _inByteCount = _data.size();
 
+		uint32_t resultHead = mHead + static_cast<uint32_t>(_inByteCount);
+		if (resultHead > mCapacity)
+		{
+			//Si no hay espacio suficiente, pedimos más memoria
+			uint32_t size = resultHead;
+			if (resultHead < mCapacity * 2)
+				size = mCapacity * 2;
+			ReallocBuffer(size);
+		}
+		//Copiar en el buffer a partir de mHead
+		std::memcpy(mBuffer + mHead, _data.c_str(), _inByteCount);
+		//Incrementamos mHead para que el siguiente Write escriba a continuación
+		mHead = resultHead;
 	}
 
 

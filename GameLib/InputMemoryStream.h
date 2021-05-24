@@ -58,7 +58,16 @@ public:
 
 	void Read(std::string* _outData)
 	{
+		int _inByteCount = sizeof(*_outData);
+		size_t resultHead = mHead + _inByteCount;
 
+		if (resultHead > mCapacity)
+		{
+			throw std::exception("InputMemoryStream::No data to read");
+		}
+		std::memcpy(_outData, mBuffer + mHead, _inByteCount);
+
+		mHead = resultHead;
 	}
 
 };

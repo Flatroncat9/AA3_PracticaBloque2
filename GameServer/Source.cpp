@@ -26,14 +26,14 @@ int main()
 
 	std::cout << BIND_CORRECT;
 
-	InputMemoryStream* input;
+	InputMemoryBitStream* input;
 	std::string ip;
 	Port p;
 
 	serverSock.Receive(input, ip, p);
 
-	int i;
-	input->Read(&i);
+	std::string i;
+	input->ReadString(i, 8);
 
 	std::cout << ip << "_" << p << "  " << i << "\n";
 

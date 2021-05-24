@@ -18,8 +18,9 @@ int main()
 	//int message;
 	//std::cin >> message;
 
-	OutputMemoryStream output;
-	output.Write(65000);
+	OutputMemoryBitStream output;
+	std::string msg = "aaaa";
+	output.WriteString(msg, 8);
 
 	// OutputStream, ip, port
 	clientSock.Send(output, "localhost", 50000);
