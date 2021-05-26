@@ -1,12 +1,6 @@
 #pragma once
-#include <iostream>
-#include <SFML\Graphics.hpp>
-#include <SFML\Network.hpp>
-#include <PlayerInfo.h>
-#include <UDPSocket.h>
+#include "ServerManager.h"
 
-#define PORT 50000
-#define BIND_CORRECT "Server has been binded correctly, waiting ...\n"
 
 //Server
 // server waits for hellos_nik
@@ -19,13 +13,7 @@ int main()
 {
 	UDPSocket serverSock;
 	Status status = Status::Error;
-	do
-	{
-		status = serverSock.Bind(PORT);
-	} while (status == Status::Error);
-
-	std::cout << BIND_CORRECT;
-
+	
 	while (true)
 	{
 		InputMemoryBitStream* input;
@@ -39,7 +27,7 @@ int main()
 
 		std::cout << ip << "_" << p << "  " << i << "\n";
 
-		PlayerInfo playerInfo;
+		//PlayerInfo playerInfo;
 	}
 	
 

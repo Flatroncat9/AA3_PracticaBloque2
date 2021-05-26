@@ -1,6 +1,10 @@
 #pragma once
 #include <SFML/Network.hpp>
-
+#include <algorithm>
+#include <iterator>
+#include <iostream>
+#include <string>
+#include <sstream>
 
 typedef unsigned short Port;
 
@@ -57,11 +61,18 @@ static Status GetStatus(sf::Socket::Status _status)
 
 enum class Message_Protocol
 {
-    HELLO,
-    CH,
-    CHR,
-    WELCOME,
-    NEWPLAYER
+    HELLO,              // server <- client
+    CH,                 // server -> client
+    CHR,                // server <- client
+    WELCOME,            // server -> client
+    NEWPLAYER,          // server -> client
+    DISCONNECTED,       // server <- client
+    MOVE,               // server -> client
+    STARTMATCHMAKING,   // server <- client
+    PING,               // server -> client
+    PONG,               // server -> client
+    END,               // server -> client
+    ENDR
 };
 
 static std::string GetMessageProtocolFrom(Message_Protocol index)
@@ -77,4 +88,16 @@ static std::string GetMessageProtocolFrom(Message_Protocol index)
 static Message_Protocol GetMessageProtocol(std::string index)
 {
     return static_cast<Message_Protocol>(std::stoi(index));
+}
+
+static std::vector<std::string> split(const std::string& s, char delimiter)
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
 }
