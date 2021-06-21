@@ -41,7 +41,7 @@ Status UDPSocket::Receive(InputMemoryBitStream*& _ims, std::string& ip, Port& po
 	char data[DATA_SIZE];
 	size_t receivedSize;
 	sf::IpAddress address;
-	Status s = GetStatus(udpSocket->receive(&data, udpSocket->MaxDatagramSize, receivedSize, address, port));
+	Status s = GetStatus(udpSocket->receive(&data, DATA_SIZE, receivedSize, address, port));
 	ip = address.toString();
 	_ims = new InputMemoryBitStream(data, receivedSize);
 
