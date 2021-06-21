@@ -12,19 +12,34 @@
 
 class ServerManager
 {
-	struct ClientProxy
+	struct ClientInfo
 	{
 		// var datos juego
 		std::string IpClient;
 		Port PortClient;
 		uint32_t ClientSalt;
 		uint32_t ServerSalt;
+
+		ClientInfo(); // generar Server Salt
+
+		uint32_t GetChallenge();
+		void CreateServerSlat();
 	};
 
+	struct ClientVerified: ClientInfo
+	{
+		uint32_t mmr;
+		std::string nickName;
+		
+
+	};
+
+
+
 	UDPSocket sock;
-	std::vector<ClientProxy> pendingClients;
+	std::vector<ClientInfo> pendingClients;
 	// clients key = <ip>:std::tostring(<port>)
-	std::map<std::string, ClientProxy> clients;
+	std::map<std::string, ClientVerified> clients;
 
 	void Init();
 	void Receive();
