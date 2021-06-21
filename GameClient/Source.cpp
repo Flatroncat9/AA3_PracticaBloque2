@@ -1,5 +1,10 @@
 #pragma once
+#include <iostream>
+#include <PlayerInfo.h>
+#include <SFML\Network.hpp>
+#include <UDPSocket.h>
 #include "ClientManager.h"
+
 
 //client
 // send hello_ nik to the server until he recieves challenge
@@ -11,6 +16,8 @@
 int main()
 {
 	UDPSocket clientSock;
+	ClientManager thisClient;
+	thisClient.SendHello();
 	//int message;
 	while (true) {
 		OutputMemoryBitStream output;

@@ -9,6 +9,9 @@
 // when server gets respons adds player to his table and send welcome with playerID in server
 // envia mensajes de nevos jugadores, a los clientes ya existentes.
 
+#define SERVER_IP "localhost"
+#define SERVER_PORT 50000
+
 int main()
 {
 	UDPSocket serverSock;
@@ -17,15 +20,20 @@ int main()
 	while (true)
 	{
 		InputMemoryBitStream* input;
-		std::string ip;
-		Port p;
+		std::string ip = SERVER_IP;
+		Port p = SERVER_PORT;
 
 		Status s = serverSock.Receive(input, ip, p);
+		if (s != Status::Error) {
+			int* i = new int;
+			input->ReadBits(i, 64);
+		}
 
-		std::string i;
-		input->ReadString(i, 8);
 
-		std::cout << ip << "_" << p << "  " << i << "\n";
+		int* i = new int;
+		input->ReadBits(i, 64);
+		if(*i == 1)
+			std::cout << ip << "_" << p << "  " << i << "\n";
 
 		//PlayerInfo playerInfo;
 	}

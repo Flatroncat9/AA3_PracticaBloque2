@@ -19,10 +19,11 @@ void ClientManager::Connect()
 void ClientManager::SendHello()
 {
 	OutputMemoryBitStream output;
-	std::string msg =
-		GetMessageProtocolFrom(Message_Protocol::HELLO)
-		+ std::to_string(serverInfo.ClientSalt);
-	output.WriteString(msg, 8);
+	//std::string msg =
+	//	GetMessageProtocolFrom(Message_Protocol::HELLO);
+	int protocol = 1;//static_cast<int>(Message_Protocol::HELLO);
+	output.Write(protocol, 64);
+	//output.Write(serverInfo.ClientSalt, 4);
 	sock.Send(output, SERVER_IP, SERVER_PORT);
 }
 
