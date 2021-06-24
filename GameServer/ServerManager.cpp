@@ -17,7 +17,7 @@ void ServerManager::Receive()
 	while (true){
 		InputMemoryBitStream* input;
 		std::string ip;
-		Port p;
+		Port p = 50000;
 
 		Status s = sock.Receive(input, ip, p);
 

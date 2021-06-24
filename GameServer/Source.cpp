@@ -16,25 +16,24 @@ int main()
 {
 	UDPSocket serverSock;
 	Status status = Status::Error;
+	InputMemoryBitStream* input;
+	std::string ip = SERVER_IP;
+	Port p = SERVER_PORT;
+	status = serverSock.Bind(p);
 	
 	while (true)
 	{
-		InputMemoryBitStream* input;
-		std::string ip = SERVER_IP;
-		Port p = SERVER_PORT;
+		std::string clientIP;
+		Port clientPort;
 
-		Status s = serverSock.Receive(input, ip, p);
+		Status s = serverSock.Receive(input, clientIP, clientPort);
 		if (s != Status::Error) {
-			int* i = new int;
-			input->ReadBits(i, 64);
+			int* i = new int[1000];
+			//input->ReadString(i, 64);		// Para leer strings
+			//input->ReadBits(i, 64);		// Para leer bits
+			input->Read(i, 32);		// Para leer Int y varios
+			std::cout << ip << "_" << p << "  " << *i << "\n";
 		}
-
-
-		int* i = new int;
-		input->ReadBits(i, 64);
-		if(*i == 1)
-			std::cout << ip << "_" << p << "  " << i << "\n";
-
 		//PlayerInfo playerInfo;
 	}
 	

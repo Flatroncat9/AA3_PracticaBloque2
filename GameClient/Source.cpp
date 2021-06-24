@@ -16,19 +16,20 @@
 int main()
 {
 	UDPSocket clientSock;
-	ClientManager thisClient;
-	thisClient.SendHello();
+	//ClientManager thisClient;
+	//thisClient.SendHello();
 	//int message;
 	while (true) {
 		OutputMemoryBitStream output;
-		std::string msg = "";
+		int msg = 12;
 
-		std::cout << "Escribe un mensaje";
-		std::cin >> msg;
-		output.WriteString(msg, 8);
+		//std::cout << "Escribe un mensaje";
+		//std::cin >> msg;
+		output.Write(msg, 32);
 
 		// OutputStream, ip, port
 		clientSock.Send(output, "localhost", 50000);
+		system("pause");
 	}
 
 	PlayerInfo playerInfo;
