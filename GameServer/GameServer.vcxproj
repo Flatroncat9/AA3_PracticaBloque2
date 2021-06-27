@@ -157,7 +157,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ServerManager.cpp" />
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Source_Server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ServerManager.h" />

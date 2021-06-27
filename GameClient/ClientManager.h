@@ -13,26 +13,26 @@ class ClientManager
 {
 	struct ServerInfo
 	{
-		std::string IpServer;
-		Port PortClient;
+		std::string IpServer = SERVER_IP;
+		Port PortServer = SERVER_PORT;
 		bool isConnected;
 		uint32_t ClientSalt;
 		uint32_t ServerSalt;
 	};
 
-	ServerInfo serverInfo; 
 	short id; // salt
 	// Move_idPlayer_idPlayer_IdMove_x_y
 	// 
-	UDPSocket sock;
 
 public:
+	ServerInfo serverInfo;
+	UDPSocket sock;
 	ClientManager();
 
 	void Connect();
 	void SendHello();
 	void SendChallengeResponse();
 	void Receive();
-	void ManageMessageReceived(std::string message, std::string ip, Port port);
+	void ManageMessageReceived(InputMemoryBitStream*& input, std::string& ip, Port& port);
 };
 

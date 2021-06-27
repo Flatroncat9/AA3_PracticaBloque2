@@ -14,30 +14,47 @@
 
 int main()
 {
-	UDPSocket serverSock;
-	Status status = Status::Error;
+	ServerManager myServer;
 	InputMemoryBitStream* input;
+	Status status = Status::Error;
 	std::string ip = SERVER_IP;
 	Port p = SERVER_PORT;
-	status = serverSock.Bind(p);
+	status = myServer.BindSock(p);
 	
 	while (true)
 	{
 		std::string clientIP;
-		Port clientPort;
+		Port clientPort = 0;
 
-		Status s = serverSock.Receive(input, clientIP, clientPort);
-		if (s != Status::Error) {
+		Status s = myServer.Receive(input, clientIP, clientPort);
+		if (true) {
 			int* i = new int[1000];
-			//input->ReadString(i, 64);		// Para leer strings
-			//input->ReadBits(i, 64);		// Para leer bits
 			input->Read(i, 32);		// Para leer Int y varios
+			switch (static_cast<Message_Protocol>(*i)) {
+				case Message_Protocol::HELLO:
+					input->Read(i, 32);
+					myServer.IsNewPlayer(clientIP, clientPort, *i);
+					myServer.SendNewPlayerConnection();
+					break;
+				case Message_Protocol::CHR:
+					break;
+				case Message_Protocol::MOVE:
+					break;
+				case Message_Protocol::STARTMATCHMAKING:
+					break;
+				case Message_Protocol::PONG:
+					break;
+				case Message_Protocol::ENDR:
+					break;
+				case Message_Protocol::MESSAGE:
+					myServer.SendMessageToPlayers(input);
+					break;
+			}
 			std::cout << ip << "_" << p << "  " << *i << "\n";
 		}
-		//PlayerInfo playerInfo;
 	}
 	
 
-	system("pause");
+	//system("pause");
 	return 0;
 }

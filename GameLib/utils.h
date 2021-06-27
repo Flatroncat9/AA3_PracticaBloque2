@@ -71,6 +71,7 @@ enum class Message_Protocol
     STARTMATCHMAKING,   // server <- client
     PING,               // server -> client
     PONG,               // server -> client
+    MESSAGE,
     END,               // server -> client
     ENDR
 };

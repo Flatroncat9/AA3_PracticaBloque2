@@ -21,9 +21,15 @@ class ServerManager
 		uint32_t ServerSalt;
 
 		ClientInfo(); // generar Server Salt
+		ClientInfo(std::string ip, Port port, uint32_t _clientSalt) {
+			IpClient = ip;
+			PortClient = port;
+			ClientSalt = _clientSalt;
+			ServerSalt = rand() % UINT32_MAX;
+		};
 
 		uint32_t GetChallenge();
-		void CreateServerSlat();
+		void CreateServerSalt();
 	};
 
 	struct ClientVerified: ClientInfo
@@ -38,13 +44,19 @@ class ServerManager
 
 	UDPSocket sock;
 	std::vector<ClientInfo> pendingClients;
-	// clients key = <ip>:std::tostring(<port>)
 	std::map<std::string, ClientVerified> clients;
 
+public:
+	InputMemoryBitStream* input;
+
+	Status BindSock(Port p);
+	Status Receive(InputMemoryBitStream*& input, std::string& ip, Port& p);
 	void Init();
+	void SendMessageToPlayers(InputMemoryBitStream* input);
 	void Receive();
 	void ManageMessageReceived(std::string message, std::string ip, Port port);
+	void SendNewPlayerConnection();
 
-	bool IsNewPlayer(std::string ip, Port port);
+	bool IsNewPlayer(std::string ip, Port port, uint32_t clientSalt);
 };
 
