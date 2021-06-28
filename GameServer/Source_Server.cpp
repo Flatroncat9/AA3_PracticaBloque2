@@ -1,6 +1,6 @@
 #pragma once
 #include "ServerManager.h"
-
+#include <thread>
 
 //Server
 // server waits for hellos_nik
@@ -12,31 +12,55 @@
 #define SERVER_IP "localhost"
 #define SERVER_PORT 50000
 
+void CheckLastMessage(ServerManager server) {
+	auto start = std::chrono::system_clock::now();
+	while (true) {
+		std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
+		if (elapsed_seconds.count() > 1) {
+			server.CheckLastMessage();
+			start = std::chrono::system_clock::now();
+		}
+	}
+}
+
+void SendExitMessage(ServerManager& server) {
+	std::string msg;
+	std::cin >> msg;
+	if (msg == "exit" || msg == "EXIT") {
+		server.Disconnect();
+	}
+}
+
 int main()
 {
 	ServerManager myServer;
-	InputMemoryBitStream* input;
 	Status status = Status::Error;
 	std::string ip = SERVER_IP;
 	Port p = SERVER_PORT;
 	status = myServer.BindSock(p);
+
+	std::thread t1(CheckLastMessage, myServer);
+	t1.detach();
+	std::thread t2(SendExitMessage, myServer);
+	t2.detach();
 	
-	while (true)
+	while (myServer.onLoop)
 	{
 		std::string clientIP;
 		Port clientPort = 0;
 
-		Status s = myServer.Receive(input, clientIP, clientPort);
-		if (true) {
-			int* i = new int[1000];
-			input->Read(i, 32);		// Para leer Int y varios
-			switch (static_cast<Message_Protocol>(*i)) {
+		Status s = myServer.Receive(myServer.input, clientIP, clientPort);
+		if (s == Status::Done) {
+			myServer.input->Read(myServer.integer, 32);		// Para leer Int y varios
+			switch (static_cast<Message_Protocol>(*myServer.integer)) {
 				case Message_Protocol::HELLO:
-					input->Read(i, 32);
-					myServer.IsNewPlayer(clientIP, clientPort, *i);
+					myServer.input->Read(myServer.integer, 32);
+					myServer.IsNewPlayer(clientIP, clientPort, *myServer.integer);
 					myServer.SendNewPlayerConnection();
+					myServer.SendChallenge(*myServer.integer);
 					break;
 				case Message_Protocol::CHR:
+					myServer.SendWelcome();
 					break;
 				case Message_Protocol::MOVE:
 					break;
@@ -44,17 +68,20 @@ int main()
 					break;
 				case Message_Protocol::PONG:
 					break;
+				case Message_Protocol::END:
+					myServer.DisconnectClient();
 				case Message_Protocol::ENDR:
+
 					break;
 				case Message_Protocol::MESSAGE:
-					myServer.SendMessageToPlayers(input);
+					myServer.SendMessageToPlayers();
 					break;
 			}
-			std::cout << ip << "_" << p << "  " << *i << "\n";
+			std::cout << ip << "_" << p << "  " << *myServer.integer << "\n";
 		}
 	}
 	
 
-	//system("pause");
 	return 0;
 }
+

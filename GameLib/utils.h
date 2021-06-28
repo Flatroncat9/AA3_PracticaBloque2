@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 typedef unsigned short Port;
 
@@ -51,9 +52,8 @@ static Status GetStatus(sf::Socket::Status _status)
         status = Status::NotReady;
         break;
     case sf::Socket::Error:
-        status = Status::Error;
-        break;
     default:
+        status = Status::Error;
         break;
     }
     return status;

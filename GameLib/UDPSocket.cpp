@@ -4,6 +4,7 @@
 UDPSocket::UDPSocket()
 {
 	udpSocket = new sf::UdpSocket();
+	udpSocket->setBlocking(false);
 }
 
 UDPSocket::UDPSocket(sf::UdpSocket* _udpSocket)

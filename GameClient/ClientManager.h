@@ -13,6 +13,7 @@ class ClientManager
 {
 	struct ServerInfo
 	{
+		
 		std::string IpServer = SERVER_IP;
 		Port PortServer = SERVER_PORT;
 		bool isConnected;
@@ -20,18 +21,22 @@ class ClientManager
 		uint32_t ServerSalt;
 	};
 
-	short id; // salt
 	// Move_idPlayer_idPlayer_IdMove_x_y
 	// 
+	int* integer = new int;
+
 
 public:
+	bool onLoop = true;
+	bool loggedIn = false;
 	ServerInfo serverInfo;
 	UDPSocket sock;
 	ClientManager();
 
+	bool CheckSalts(InputMemoryBitStream*& input);
 	void Connect();
 	void SendHello();
-	void SendChallengeResponse();
+	void SendChallengeResponse(InputMemoryBitStream*& input);
 	void Receive();
 	void ManageMessageReceived(InputMemoryBitStream*& input, std::string& ip, Port& port);
 };

@@ -156,10 +156,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CriticalPacket.cpp" />
     <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="Source_Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CriticalPacket.h" />
     <ClInclude Include="ServerManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
