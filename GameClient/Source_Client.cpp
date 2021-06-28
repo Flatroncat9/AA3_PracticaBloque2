@@ -32,13 +32,9 @@
 
 #define COUNTDOWN_CONNECT 30
 
-//client
-// send hello_ nik to the server until he recieves challenge
-// when recive challenge responds with challengeResponse
-// waits for welcome, but if he receive again the challenge he sends the challengeRespons again untel recieve Welcome_id
-// when receive Welocome_id player sets is id and wait for other players
 
 void SendMessage(ClientManager* thisClient) {
+    // Server can write
 	std::string msg;
 
 	while (true) {
@@ -75,6 +71,7 @@ void ReceiveMessages(ClientManager* thisClient) {
 }
 
 void SendMovement(ClientManager* thisClient) {
+    // Accumulates movement
     while (thisClient->onLoop) {
         thisClient->SendAccum();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

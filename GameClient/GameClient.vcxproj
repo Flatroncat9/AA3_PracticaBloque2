@@ -155,7 +155,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ClientManager.cpp" />
-    <ClCompile Include="CodigoChat1solo.cpp" />
     <ClCompile Include="Source_Client.cpp" />
   </ItemGroup>
   <ItemGroup>

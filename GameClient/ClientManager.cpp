@@ -25,12 +25,6 @@ bool ClientManager::CheckSalts(InputMemoryBitStream*& input)
 		return false;
 }
 
-void ClientManager::Connect()
-{
-	
-
-
-}
 
 void ClientManager::SendHello()
 {
@@ -55,26 +49,17 @@ void ClientManager::SendChallengeResponse(InputMemoryBitStream*& input)
 	}
 }
 
-void ClientManager::Receive()
-{
-	while (true) {
-		InputMemoryBitStream* input;
-		std::string ip;
-		Port p = 500;
-		Status s = sock.Receive(input, ip, p);
-
-		ManageMessageReceived(input, ip, p);
-	}
-}
 
 void ClientManager::AddAccum( int _x, int _y)
 {
+	// Accumulates the distance to send it to the server
 	accumX += _x;
 	accumY += _y;
 }
 
 void ClientManager::SendAccum()
 {
+	// Sends all the accumulated distance
 	AccumMove aux;
 	aux.idMove = totalAccum;
 	aux.idPlayer = myID;
@@ -97,6 +82,7 @@ void ClientManager::SendAccum()
 
 void ClientManager::MovePlayer(InputMemoryBitStream*& input)
 {
+	// Received new position 
 	int idPlayer, idMove, posX, posY;
 	input->Read(&idPlayer, 32);
 	input->Read(&idMove, 32);
@@ -120,6 +106,7 @@ void ClientManager::SetPosition(int _x, int _y)
 
 void ClientManager::SendAck(InputMemoryBitStream*& input)
 {
+	// Sends the Ack the the Server
 	int packetID;
 	input->Read(&packetID, 32);
 	OutputMemoryBitStream oms;
@@ -134,7 +121,7 @@ void ClientManager::SendAck(InputMemoryBitStream*& input)
 
 void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::string& ip, Port& port)
 {
-	// Lee header
+	// Reads HEADER
 	input->Read(integer, 32);
 	Message_Protocol protocol = static_cast<Message_Protocol>(*integer);
 	std::string msg;
@@ -175,7 +162,7 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 		}
 		break;
 
-	case Message_Protocol::MESSAGE:
+	case Message_Protocol::MESSAGE:	// Received normal message
 		input->ReadString(msg, 8);
 		std::cout << msg << std::endl;
 		break;
@@ -187,12 +174,12 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 		}
 		break;
 
-	case Message_Protocol::OKMOVE:
+	case Message_Protocol::OKMOVE:	// New position validated
 		if (CheckSalts(input)) {
 			MovePlayer(input);
 		}
 		break;
-	case Message_Protocol::DISCONNECTED:
+	case Message_Protocol::DISCONNECTED:	// Critical Packet
 		if (CheckSalts(input))
 			SendAck(input);
 			std::cout << "A Client has disconnected\n";

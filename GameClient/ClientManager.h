@@ -52,10 +52,8 @@ public:
 
 	int GetID();
 	bool CheckSalts(InputMemoryBitStream*& input);
-	void Connect();
 	void SendHello();
 	void SendChallengeResponse(InputMemoryBitStream*& input);
-	void Receive();
 	void AddAccum(int _x, int _y);
 	void SendAccum();
 	void MovePlayer(InputMemoryBitStream*& input);

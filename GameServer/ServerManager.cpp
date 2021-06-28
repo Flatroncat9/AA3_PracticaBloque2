@@ -40,7 +40,7 @@ void ServerManager::SendMessageToPlayers()
 
 void ServerManager::SendNewPlayerConnection()
 {
-
+	// New client verified connected
 	for (auto it = clients.begin(); it != clients.end(); it++) {
 		OutputMemoryBitStream* message = new OutputMemoryBitStream();
 		//Protocol + Salt
@@ -163,6 +163,7 @@ void ServerManager::CheckLastMessage()
 				totalPacketID++;
 
 			}
+			// Erase memory
 			clients.erase(it);
 			break;
 
@@ -184,6 +185,7 @@ void ServerManager::CheckLastMessage()
 
 void ServerManager::DisconnectClient()
 {
+	// Sends to everyone there's a client that has disconnected
 	input->Read(integer, 32);
 	auto it = clients.find(*integer);
 	if (it != clients.end()) {
@@ -215,6 +217,7 @@ void ServerManager::DisconnectClient()
 
 void ServerManager::Disconnect()
 {
+	// Server Disconnects
 	for (auto i = clients.begin(); i != clients.end(); i++) {
 		OutputMemoryBitStream message;
 		message.Write(static_cast<int>(Message_Protocol::END), 32);
@@ -247,6 +250,7 @@ void ServerManager::ErasePacket()
 
 void ServerManager::Accumulate()
 {
+	// Checks if the accumulated pos can be true
 	int clientSalt, serverSalt, idPlayer, idMove, posX, posY;
 	input->Read(&clientSalt, 32);
 	input->Read(&serverSalt, 32);
