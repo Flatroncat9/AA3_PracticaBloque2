@@ -48,6 +48,7 @@ void SendMessage(ClientManager* thisClient) {
 
 		if (msg == "exit" || msg == "EXIT") {
 			oms.Write(static_cast<int>(Message_Protocol::END), 32);
+            oms.Write(thisClient->GetID(), 32);
 			oms.Write(thisClient->serverInfo.ClientSalt, 32);
 			oms.Write(thisClient->serverInfo.ServerSalt, 32);
 			thisClient->sock.Send(oms, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
@@ -64,8 +65,9 @@ void ReceiveMessages(ClientManager* thisClient) {
     // Receive messages
     while (thisClient->onLoop) {
         InputMemoryBitStream* input;
-
-        Status s = thisClient->sock.Receive(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
+        std::string ipServer;
+        Port portServer;
+        Status s = thisClient->sock.Receive(input, ipServer, portServer);
         if (s == Status::Done)
             thisClient->ManageMessageReceived(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
 
@@ -139,7 +141,7 @@ void DrawDungeon(ClientManager* thisClient)
         }
 
         sf::Vector2f position;
-        position.x = thisClient->serverInfo.x; position.y = thisClient->serverInfo.x;
+        position.x = thisClient->x; position.y = thisClient->y;
         shape.setFillColor(sf::Color::Blue);
         shape.setFillColor(sf::Color(0, 0, 255, 255));
         shape.setPosition(sf::Vector2f(position.x * SIZE, position.y * SIZE));
@@ -172,8 +174,9 @@ int main()
 			lastMessageSent = std::chrono::system_clock::now();
 		}
 		InputMemoryBitStream* input;
-
-		Status s = thisClient->sock.Receive(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
+        std::string aux;
+        Port port;
+		Status s = thisClient->sock.Receive(input, aux, port);
 		if (s == Status::Done)
 			thisClient->ManageMessageReceived(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
 		elapsed_seconds = std::chrono::system_clock::now() - initProgram;
@@ -191,7 +194,7 @@ int main()
     t2.detach();
 
     std::thread t3(SendMovement, thisClient);
-    t2.detach();
+    t3.detach();
 	
     DrawDungeon(thisClient);
 	return 0;

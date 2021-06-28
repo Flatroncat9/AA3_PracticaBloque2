@@ -10,13 +10,14 @@
 
 #define PORT 50000
 #define BIND_CORRECT "Server has been binded correctly, waiting ...\n"
-#define COUNTDOWN_DISCONNECT 30
+#define COUNTDOWN_DISCONNECT 10
 
 
 class ServerManager
 {
 	struct ClientInfo
 	{
+	public:
 		// time_point last message
 		std::chrono::system_clock::time_point lastMessageReceived = std::chrono::system_clock::now();
 
@@ -88,18 +89,17 @@ class ServerManager
 
 	};
 
-	// Critical Packets
+	// Critical Packets counter
 	unsigned int totalPacketID = 0;
 
 	int clientsCounter = 0;
-	/// TODO: When a player conects, send packets to other players and insert in this map
 	
 
-	UDPSocket sock;
 	std::vector<ClientInfo> pendingClients;
 	std::queue<AccumMove> moves;
 
 public:
+	UDPSocket sock;
 
 	std::map<int, ClientVerified*> clients;
 	// Critical Packets
@@ -114,8 +114,6 @@ public:
 	Status Receive(InputMemoryBitStream*& input, std::string& ip, Port& p);
 	void Init();
 	void SendMessageToPlayers();
-	void Receive();
-	void ManageMessageReceived(std::string message, std::string ip, Port port);
 	void SendNewPlayerConnection();
 	void SendChallenge(uint32_t ClientSalt);
 	void SendWelcome();
@@ -124,7 +122,6 @@ public:
 	void Disconnect();
 	void ErasePacket();
 	void Accumulate();
-	UDPSocket GetSocket();
 	bool IsNewPlayer(std::string ip, Port port, uint32_t clientSalt);
 };
 

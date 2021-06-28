@@ -37,26 +37,6 @@ void ServerManager::SendMessageToPlayers()
 	}
 }
 
-void ServerManager::Receive()
-{
-	while (true){
-		InputMemoryBitStream* input;
-		std::string ip;
-		Port p = 50000;
-
-		Status s = sock.Receive(input, ip, p);
-
-		std::string i;
-		input->ReadString(i, 8);
-
-		ManageMessageReceived(i, ip, p);
-	}
-}
-
-void ServerManager::ManageMessageReceived(std::string message, std::string ip, Port port)
-{
-
-}
 
 void ServerManager::SendNewPlayerConnection()
 {
@@ -126,8 +106,8 @@ void ServerManager::SendWelcome()
 				message->Write(aux->y, 32);
 				sock.Send(*message, i->IpClient, i->PortClient);
 				clients[aux->clientId] = aux;
+				aux->lastMessageReceived = std::chrono::system_clock::now();
 				clientsCounter++;
-
 				std::cout << "New Client with ID: " << aux->clientId;
 				SendNewPlayerConnection();
 				// Erase client from notVerified
@@ -143,6 +123,7 @@ void ServerManager::SendWelcome()
 	if (it != clients.end()) {
 		input->Read(integer, 32);
 		if (it->second->ServerSalt == *integer) {
+			it->second->lastMessageReceived = std::chrono::system_clock::now();
 			OutputMemoryBitStream message;
 			message.Write(static_cast<int>(Message_Protocol::WELCOME), 32);
 			message.Write(it->second->ClientSalt, 32);
@@ -163,9 +144,12 @@ void ServerManager::CheckLastMessage()
 	for (auto it = clients.begin(); it != clients.end(); it++) {
 		elapsed_seconds = now - it->second->lastMessageReceived;
 		if (elapsed_seconds.count() > COUNTDOWN_DISCONNECT) {
-			//TODO enviar Disconnect a los demás
-			clients.erase(it);
-
+			OutputMemoryBitStream oms;
+			oms.Write(static_cast<int>(Message_Protocol::AFK), 32);
+			oms.Write(it->second->ClientSalt, 32);
+			oms.Write(it->second->ServerSalt, 32);
+			sock.Send(oms, it->second->IpClient, it->second->PortClient);
+			
 			for (auto i = clients.begin(); i != clients.end(); i++) {
 				OutputMemoryBitStream* message = new OutputMemoryBitStream();
 				message->Write(static_cast<int>(Message_Protocol::DISCONNECTED), 32);
@@ -179,8 +163,13 @@ void ServerManager::CheckLastMessage()
 				totalPacketID++;
 
 			}
+			clients.erase(it);
+			break;
+
 		}
 	}
+
+	
 
 	// Checks notVerified
 	for (auto i = pendingClients.begin(); i != pendingClients.end(); i++) {
@@ -198,8 +187,11 @@ void ServerManager::DisconnectClient()
 	input->Read(integer, 32);
 	auto it = clients.find(*integer);
 	if (it != clients.end()) {
-		input->Read(integer, 32);
-		if (it->second->ServerSalt == *integer) {
+		int clientSalt, serverSalt;
+		input->Read(&clientSalt, 32);
+		input->Read(&serverSalt, 32);
+		if (it->second->ClientSalt == clientSalt && it->second->ServerSalt == serverSalt) {
+			it->second->lastMessageReceived = std::chrono::system_clock::now();
 			for (auto i = clients.begin(); i != clients.end(); i++) {
 				OutputMemoryBitStream *message = new OutputMemoryBitStream();
 				message->Write(static_cast<int>(Message_Protocol::DISCONNECTED), 32);
@@ -265,8 +257,9 @@ void ServerManager::Accumulate()
 	auto it = clients.find(idPlayer);
 	if (it != clients.end()) {
 		if (it->second->ClientSalt == clientSalt && it->second->ServerSalt == serverSalt) {
+			it->second->lastMessageReceived = std::chrono::system_clock::now();
 			if (it->second->moveId < idMove) {
-				// 
+				// Checks if its out of bounds
 				if (posX >= W_NUM_TILES)
 					posX = W_NUM_TILES - 1;
 				else if (posX < 0)
@@ -283,10 +276,6 @@ void ServerManager::Accumulate()
 	}
 }
 
-UDPSocket ServerManager::GetSocket()
-{
-	return sock;
-}
 
 
 
@@ -301,7 +290,6 @@ bool ServerManager::IsNewPlayer(std::string ip, Port port, uint32_t clientSalt)
 		}
 	}
 	pendingClients.push_back(ClientInfo(ip, port, clientSalt));
-	std::cout << "New client added: " << ip << " " << port << " " << clientSalt << std::endl;
 
 	return true;
 }

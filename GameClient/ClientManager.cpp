@@ -69,8 +69,8 @@ void ClientManager::Receive()
 
 void ClientManager::AddAccum( int _x, int _y)
 {
-	serverInfo.accumX += _x;
-	serverInfo.accumY += _y;
+	accumX += _x;
+	accumY += _y;
 }
 
 void ClientManager::SendAccum()
@@ -78,8 +78,8 @@ void ClientManager::SendAccum()
 	AccumMove aux;
 	aux.idMove = totalAccum;
 	aux.idPlayer = myID;
-	aux.x = serverInfo.accumX + serverInfo.x;
-	aux.y = serverInfo.accumY + serverInfo.y;
+	aux.x = accumX + x;
+	aux.y = accumY + y;
 	totalAccum++;
 	moves.push_back(aux);
 	
@@ -92,12 +92,30 @@ void ClientManager::SendAccum()
 	oms.Write(aux.x, 32);
 	oms.Write(aux.y, 32);
 	sock.Send(oms, serverInfo.IpServer, serverInfo.PortServer);
+	
+}
+
+void ClientManager::MovePlayer(InputMemoryBitStream*& input)
+{
+	int idPlayer, idMove, posX, posY;
+	input->Read(&idPlayer, 32);
+	input->Read(&idMove, 32);
+	input->Read(&posX, 32);
+	input->Read(&posY, 32);
+	if(!moves.empty())
+		while (moves.front().idMove < idMove) {
+			moves.pop_front();
+		}
+	x = posX;
+	y = posY;
+	accumX = 0;
+	accumY = 0;
 }
 
 void ClientManager::SetPosition(int _x, int _y)
 {
-	serverInfo.x = _x;
-	serverInfo.y = _y;
+	x = _x;
+	y = _y;
 }
 
 void ClientManager::SendAck(InputMemoryBitStream*& input)
@@ -111,11 +129,7 @@ void ClientManager::SendAck(InputMemoryBitStream*& input)
 	oms.Write(packetID, 32);
 	sock.Send(oms, serverInfo.IpServer, serverInfo.PortServer);
 
-	// Saves enemy position to show in the map
-	int x, y;
-	input->Read(&x, 32);
-	input->Read(&y, 32);
-	enemyPos.push_back(std::pair<int, int>(x, y));
+	
 }
 
 void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::string& ip, Port& port)
@@ -123,13 +137,13 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 	// Lee header
 	input->Read(integer, 32);
 	Message_Protocol protocol = static_cast<Message_Protocol>(*integer);
-	std::cout << GetMessageProtocolFrom(protocol) << std::endl;
 	std::string msg;
 	switch (protocol)
 	{
 	case Message_Protocol::CH:
 		SendChallengeResponse(input);
 		break;
+
 	case Message_Protocol::WELCOME:
 		if (CheckSalts(input)) {
 			loggedIn = true;
@@ -140,24 +154,32 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 			input->Read(&y, 32);
 			SetPosition(x,y);
 		}
-		
 		break;
+
 		//TODO: start Machmaking case
 	case Message_Protocol::NEWPLAYER:
 		if (CheckSalts(input)) {
 			SendAck(input);
+			// Saves enemy position to show in the map
+			int x, y;
+			input->Read(&x, 32);
+			input->Read(&y, 32);
+			enemyPos.push_back(std::pair<int, int>(x, y));
 		}
 		break;
-	case Message_Protocol::ENDR:
+
+	case Message_Protocol::AFK:
 		if (CheckSalts(input)) {
 			std::cout << "You've been disconnected for inactivity\n";
 			onLoop = false;
 		}
 		break;
+
 	case Message_Protocol::MESSAGE:
 		input->ReadString(msg, 8);
 		std::cout << msg << std::endl;
 		break;
+
 	case Message_Protocol::END:
 		if (CheckSalts(input)) {
 			onLoop = false;
@@ -165,18 +187,17 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 		}
 		break;
 
+	case Message_Protocol::OKMOVE:
+		if (CheckSalts(input)) {
+			MovePlayer(input);
+		}
+		break;
 	case Message_Protocol::DISCONNECTED:
-		if(CheckSalts(input))
-			// TODO : enviar ACK
-			// Recibir packetID
+		if (CheckSalts(input))
+			SendAck(input);
 			std::cout << "A Client has disconnected\n";
 		break;
-
-
-	
-
 	default:
-
 		break;
 	}
 }

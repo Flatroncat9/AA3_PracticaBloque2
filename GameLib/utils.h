@@ -81,7 +81,8 @@ enum class Message_Protocol
     MESSAGE,
     END,               // server -> client
     ENDR,
-    ACK
+    ACK,
+    AFK
 };
 
 static std::string GetMessageProtocolFrom(Message_Protocol index)

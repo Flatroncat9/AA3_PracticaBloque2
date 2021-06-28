@@ -28,7 +28,7 @@ void CheckLastMessage(ServerManager* server) {
 void CheckPackets(ServerManager* server) {
 	while (server->onLoop) {
 		for (auto it = server->packets.begin(); it != server->packets.end(); it++) {
-			it->second->SendAgain(server->GetSocket());
+			it->second->SendAgain(server->sock);
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
@@ -45,8 +45,7 @@ void SendMovement(ServerManager* server) {
 			oms.Write(it->second->moveId, 32);
 			oms.Write(it->second->x, 32);
 			oms.Write(it->second->y, 32);
-			server->GetSocket().Send(oms, it->second->IpClient, it->second->PortClient);
-
+			server->sock.Send(oms, it->second->IpClient, it->second->PortClient);
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
@@ -75,6 +74,8 @@ int main()
 	t2.detach();
 	std::thread t3(SendMovement, myServer);
 	t3.detach();
+	std::thread t4(CheckPackets, myServer);
+	t4.detach();
 	
 	while (myServer->onLoop)
 	{
@@ -112,7 +113,6 @@ int main()
 				case Message_Protocol::ACK:
 					myServer->ErasePacket();
 			}
-			std::cout << ip << "_" << p << "  " << *myServer->integer << "\n";
 		}
 	}
 	
