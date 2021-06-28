@@ -7,7 +7,13 @@
 #include <sstream>
 #include <chrono>
 
+#define H_NUM_TILES 60
+#define W_NUM_TILES 80
+
+
 typedef unsigned short Port;
+
+
 
 struct ClientInfo {
     std::string ip;
@@ -73,7 +79,8 @@ enum class Message_Protocol
     PONG,               // server -> client
     MESSAGE,
     END,               // server -> client
-    ENDR
+    ENDR,
+    ACK
 };
 
 static std::string GetMessageProtocolFrom(Message_Protocol index)
@@ -102,3 +109,9 @@ static std::vector<std::string> split(const std::string& s, char delimiter)
     }
     return tokens;
 }
+
+struct Pos {
+    int x, y;
+    Pos() { x = 0; y = 0; }
+    Pos(int _x, int _y) { x = _x; y = _y; }
+};

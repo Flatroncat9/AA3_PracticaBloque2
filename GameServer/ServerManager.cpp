@@ -80,11 +80,23 @@ void ServerManager::ManageMessageReceived(std::string message, std::string ip, P
 
 void ServerManager::SendNewPlayerConnection()
 {
+
 	for (auto it = clients.begin(); it != clients.end(); it++) {
-		OutputMemoryBitStream message;
-		message.Write(static_cast<int>(Message_Protocol::MESSAGE), 32);
-		message.WriteString("New Client Connected", 8);
-		sock.Send(message, it->second->IpClient, it->second->PortClient);
+		OutputMemoryBitStream* message = new OutputMemoryBitStream();
+		//Protocol + Salt
+		message->Write(static_cast<int>(Message_Protocol::NEWPLAYER), 32);
+		message->Write(it->second->ClientSalt, 32);
+		message->Write(it->second->ServerSalt, 32);
+		//PacketID
+		message->Write(totalPacketID, 32);
+		totalPacketID++;
+		//Pos
+		message->Write(it->second->x, 32);
+		message->Write(it->second->y, 32);
+		sock.Send(*message, it->second->IpClient, it->second->PortClient);
+		// Adds packet to criticalMap
+		CriticalPacket* packet = new CriticalPacket(message, it->second->PortClient, it->second->ClientSalt, it->second->ServerSalt);
+		packets[totalPacketID] = packet;
 	}
 }
 
@@ -108,6 +120,8 @@ void ServerManager::SendChallenge(uint32_t _clientSalt)
 		message.Write(static_cast<int>(Message_Protocol::WELCOME), 32);
 		message.Write(it->second->ClientSalt, 32);
 		message.Write(it->second->ServerSalt, 32);
+		message.Write(it->second->x, 32);
+		message.Write(it->second->y, 32);
 		sock.Send(message, it->second->IpClient, it->second->PortClient);
 	}
 }
@@ -120,14 +134,22 @@ void ServerManager::SendWelcome()
 		if (i->ClientSalt == *integer) {
 			input->Read(integer, 32);
 			if (i->ServerSalt == *integer) {
-				OutputMemoryBitStream message;
-				message.Write(static_cast<int>(Message_Protocol::WELCOME), 32);
-				message.Write(i->ClientSalt, 32);
-				message.Write(i->ServerSalt, 32);
-				sock.Send(message, i->IpClient, i->PortClient);
+				OutputMemoryBitStream* message = new OutputMemoryBitStream();
+				message->Write(static_cast<int>(Message_Protocol::WELCOME), 32);
+				message->Write(i->ClientSalt, 32);
+				message->Write(i->ServerSalt, 32);
 				ClientVerified* aux = new ClientVerified(*i);
+				//aux->clientId = clientsCounter++;
+				message->Write(aux->x, 32);
+				message->Write(aux->y, 32);
+				sock.Send(*message, i->IpClient, i->PortClient);
 				clients[i->ClientSalt] = aux;
+
+				SendNewPlayerConnection();
+				// Erase client from notVerified
 				pendingClients.erase(i);
+
+				
 				break;
 			}
 			
@@ -143,6 +165,8 @@ void ServerManager::SendWelcome()
 			message.Write(static_cast<int>(Message_Protocol::WELCOME), 32);
 			message.Write(it->second->ClientSalt, 32);
 			message.Write(it->second->ServerSalt, 32);
+			message.Write(it->second->x, 32);
+			message.Write(it->second->y, 32);
 			sock.Send(message, it->second->IpClient, it->second->PortClient);
 		}
 	}
@@ -204,6 +228,29 @@ void ServerManager::Disconnect()
 	onLoop = false;
 	clients.clear();
 	pendingClients.clear();
+}
+
+void ServerManager::ErasePacket()
+{
+	int clientSalt, serverSalt, packetID;
+	input->Read(&clientSalt, 32);
+	input->Read(&serverSalt, 32);
+	input->Read(&packetID, 32);
+
+	std::map<int, CriticalPacket*>::iterator it = packets.find(packetID);
+	if(it != packets.end()){
+
+		if (it->second->CheckPacket(clientSalt, serverSalt)) {
+			packets.erase(it);
+		}
+		
+	}
+
+}
+
+UDPSocket ServerManager::GetSocket()
+{
+	return sock;
 }
 
 bool ServerManager::IsNewPlayer(std::string ip, Port port, uint32_t clientSalt)

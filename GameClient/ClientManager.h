@@ -19,6 +19,11 @@ class ClientManager
 		bool isConnected;
 		uint32_t ClientSalt;
 		uint32_t ServerSalt;
+		
+		// Game Info
+		int x = 0;
+		int y = 0;
+
 	};
 
 	// Move_idPlayer_idPlayer_IdMove_x_y
@@ -26,7 +31,11 @@ class ClientManager
 	int* integer = new int;
 
 
+
+
 public:
+
+	std::vector<std::pair<int, int>> enemyPos;
 	bool onLoop = true;
 	bool loggedIn = false;
 	ServerInfo serverInfo;
@@ -38,6 +47,8 @@ public:
 	void SendHello();
 	void SendChallengeResponse(InputMemoryBitStream*& input);
 	void Receive();
+	void SetPosition(int _x, int _y);
+	void SendAck(InputMemoryBitStream*& input);
 	void ManageMessageReceived(InputMemoryBitStream*& input, std::string& ip, Port& port);
 };
 

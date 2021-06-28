@@ -5,6 +5,7 @@
 #include <PlayerInfo.h>
 #include <UDPSocket.h>
 #include <vector>
+#include "CriticalPacket.h"
 
 #define PORT 50000
 #define BIND_CORRECT "Server has been binded correctly, waiting ...\n"
@@ -45,6 +46,10 @@ class ServerManager
 		// Game Data
 		uint32_t mmr = 0;
 		std::string nickName = "";
+		//int clientId = 0;
+		int x = 0;
+		int y = 0;
+
 		ClientVerified() {
 			lastMessageReceived = std::chrono::system_clock::now();
 			IpClient = "";
@@ -53,15 +58,23 @@ class ServerManager
 			ServerSalt = NULL;
 		}
 		ClientVerified(ClientInfo _copy) {
+			mmr = 0;
+			nickName = "";
 			lastMessageReceived = _copy.lastMessageReceived;
 			IpClient = _copy.IpClient;
 			PortClient = _copy.PortClient;
 			ClientSalt = _copy.ClientSalt;
 			ServerSalt = _copy.ServerSalt;
+			//clientId = 0;
+			x = rand() % W_NUM_TILES;
+			y = rand() % H_NUM_TILES;
+			std::cout << "Pos: " << x << " " << y << std::endl;
+			//criticalPackets.clear();
 			
 		}
 		ClientVerified operator=(ClientVerified second) {
 			ClientVerified aux;
+			//aux.clientId = second.clientId;
 			aux.lastMessageReceived = second.lastMessageReceived;
 			aux.mmr = second.mmr;
 			aux.nickName = second.nickName;
@@ -69,18 +82,28 @@ class ServerManager
 			aux.PortClient = second.PortClient;
 			aux.ClientSalt = second.ClientSalt;
 			aux.ServerSalt = second.ServerSalt;
+			aux.x = second.x;
+			aux.y = second.y;
 			return aux;
 		}
 
 	};
 
+	// Critical Packets
+	unsigned int totalPacketID = 0;
 
+	int clientsCounter = 0;
+	/// TODO: When a player conects, send packets to other players and insert in this map
+	
 
 	UDPSocket sock;
 	std::vector<ClientInfo> pendingClients;
-	std::map<uint32_t, ClientVerified*> clients;
-
+	std::map<int, ClientVerified*> clients;
 public:
+
+	// Critical Packets
+	std::map<int, CriticalPacket*> packets;
+
 	bool onLoop = true;
 	InputMemoryBitStream* input;
 	int* integer = new int;
@@ -98,6 +121,8 @@ public:
 	void CheckLastMessage();
 	void DisconnectClient();
 	void Disconnect();
+	void ErasePacket();
+	UDPSocket GetSocket();
 	bool IsNewPlayer(std::string ip, Port port, uint32_t clientSalt);
 };
 

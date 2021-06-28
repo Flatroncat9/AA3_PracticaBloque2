@@ -23,6 +23,15 @@ void CheckLastMessage(ServerManager server) {
 	}
 }
 
+void CheckPackets(ServerManager server) {
+	while (true) {
+		for (auto it = server.packets.begin(); it != server.packets.end(); it++) {
+			it->second->SendAgain(server.GetSocket());
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	}
+}
+
 void SendExitMessage(ServerManager& server) {
 	std::string msg;
 	std::cin >> msg;
@@ -33,6 +42,7 @@ void SendExitMessage(ServerManager& server) {
 
 int main()
 {
+	srand(time(NULL));
 	ServerManager myServer;
 	Status status = Status::Error;
 	std::string ip = SERVER_IP;
@@ -76,6 +86,8 @@ int main()
 				case Message_Protocol::MESSAGE:
 					myServer.SendMessageToPlayers();
 					break;
+				case Message_Protocol::ACK:
+					myServer.ErasePacket();
 			}
 			std::cout << ip << "_" << p << "  " << *myServer.integer << "\n";
 		}
