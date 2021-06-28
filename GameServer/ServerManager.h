@@ -5,6 +5,7 @@
 #include <PlayerInfo.h>
 #include <UDPSocket.h>
 #include <vector>
+#include <queue>
 #include "CriticalPacket.h"
 
 #define PORT 50000
@@ -46,7 +47,8 @@ class ServerManager
 		// Game Data
 		uint32_t mmr = 0;
 		std::string nickName = "";
-		//int clientId = 0;
+		int clientId = 0;
+		int moveId = 0;
 		int x = 0;
 		int y = 0;
 
@@ -65,16 +67,13 @@ class ServerManager
 			PortClient = _copy.PortClient;
 			ClientSalt = _copy.ClientSalt;
 			ServerSalt = _copy.ServerSalt;
-			//clientId = 0;
 			x = rand() % W_NUM_TILES;
 			y = rand() % H_NUM_TILES;
 			std::cout << "Pos: " << x << " " << y << std::endl;
-			//criticalPackets.clear();
 			
 		}
 		ClientVerified operator=(ClientVerified second) {
 			ClientVerified aux;
-			//aux.clientId = second.clientId;
 			aux.lastMessageReceived = second.lastMessageReceived;
 			aux.mmr = second.mmr;
 			aux.nickName = second.nickName;
@@ -98,9 +97,11 @@ class ServerManager
 
 	UDPSocket sock;
 	std::vector<ClientInfo> pendingClients;
-	std::map<int, ClientVerified*> clients;
+	std::queue<AccumMove> moves;
+
 public:
 
+	std::map<int, ClientVerified*> clients;
 	// Critical Packets
 	std::map<int, CriticalPacket*> packets;
 
@@ -122,6 +123,7 @@ public:
 	void DisconnectClient();
 	void Disconnect();
 	void ErasePacket();
+	void Accumulate();
 	UDPSocket GetSocket();
 	bool IsNewPlayer(std::string ip, Port port, uint32_t clientSalt);
 };

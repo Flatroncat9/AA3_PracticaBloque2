@@ -74,6 +74,7 @@ enum class Message_Protocol
     NEWPLAYER,          // server -> client
     DISCONNECTED,       // server <- client
     MOVE,               // server -> client
+    OKMOVE,
     STARTMATCHMAKING,   // server <- client
     PING,               // server -> client
     PONG,               // server -> client

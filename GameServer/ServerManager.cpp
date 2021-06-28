@@ -55,27 +55,7 @@ void ServerManager::Receive()
 
 void ServerManager::ManageMessageReceived(std::string message, std::string ip, Port port)
 {
-	std::vector<std::string> splitedMessage = split(message, '_');
-	
-	
-	switch (GetMessageProtocol(splitedMessage[0]))
-	{
-	case Message_Protocol::HELLO:
-		//IsNewPlayer(splitedMessage[1]);
-		break;
-	case Message_Protocol::CHR:
 
-		break;
-	//TODO: start Machmaking case
-	case Message_Protocol::MOVE:
-
-		break;
-	case Message_Protocol::ENDR:
-
-		break;
-	default:
-		break;
-	}
 }
 
 void ServerManager::SendNewPlayerConnection()
@@ -89,7 +69,6 @@ void ServerManager::SendNewPlayerConnection()
 		message->Write(it->second->ServerSalt, 32);
 		//PacketID
 		message->Write(totalPacketID, 32);
-		totalPacketID++;
 		//Pos
 		message->Write(it->second->x, 32);
 		message->Write(it->second->y, 32);
@@ -97,6 +76,7 @@ void ServerManager::SendNewPlayerConnection()
 		// Adds packet to criticalMap
 		CriticalPacket* packet = new CriticalPacket(message, it->second->PortClient, it->second->ClientSalt, it->second->ServerSalt);
 		packets[totalPacketID] = packet;
+		totalPacketID++;
 	}
 }
 
@@ -120,6 +100,7 @@ void ServerManager::SendChallenge(uint32_t _clientSalt)
 		message.Write(static_cast<int>(Message_Protocol::WELCOME), 32);
 		message.Write(it->second->ClientSalt, 32);
 		message.Write(it->second->ServerSalt, 32);
+		message.Write(it->second->clientId, 32);
 		message.Write(it->second->x, 32);
 		message.Write(it->second->y, 32);
 		sock.Send(message, it->second->IpClient, it->second->PortClient);
@@ -139,17 +120,18 @@ void ServerManager::SendWelcome()
 				message->Write(i->ClientSalt, 32);
 				message->Write(i->ServerSalt, 32);
 				ClientVerified* aux = new ClientVerified(*i);
-				//aux->clientId = clientsCounter++;
+				aux->clientId = clientsCounter;
+				message->Write(aux->clientId, 32);
 				message->Write(aux->x, 32);
 				message->Write(aux->y, 32);
 				sock.Send(*message, i->IpClient, i->PortClient);
-				clients[i->ClientSalt] = aux;
+				clients[aux->clientId] = aux;
+				clientsCounter++;
 
+				std::cout << "New Client with ID: " << aux->clientId;
 				SendNewPlayerConnection();
 				// Erase client from notVerified
 				pendingClients.erase(i);
-
-				
 				break;
 			}
 			
@@ -165,6 +147,7 @@ void ServerManager::SendWelcome()
 			message.Write(static_cast<int>(Message_Protocol::WELCOME), 32);
 			message.Write(it->second->ClientSalt, 32);
 			message.Write(it->second->ServerSalt, 32);
+			message.Write(it->second->clientId, 32);
 			message.Write(it->second->x, 32);
 			message.Write(it->second->y, 32);
 			sock.Send(message, it->second->IpClient, it->second->PortClient);
@@ -180,7 +163,22 @@ void ServerManager::CheckLastMessage()
 	for (auto it = clients.begin(); it != clients.end(); it++) {
 		elapsed_seconds = now - it->second->lastMessageReceived;
 		if (elapsed_seconds.count() > COUNTDOWN_DISCONNECT) {
+			//TODO enviar Disconnect a los demás
 			clients.erase(it);
+
+			for (auto i = clients.begin(); i != clients.end(); i++) {
+				OutputMemoryBitStream* message = new OutputMemoryBitStream();
+				message->Write(static_cast<int>(Message_Protocol::DISCONNECTED), 32);
+				message->Write(i->second->ClientSalt, 32);
+				message->Write(i->second->ServerSalt, 32);
+				message->Write(totalPacketID, 32);
+				sock.Send(*message, i->second->IpClient, i->second->PortClient);
+				// Adds packet to criticalMap
+				CriticalPacket* packet = new CriticalPacket(message, i->second->PortClient, i->second->ClientSalt, i->second->ServerSalt);
+				packets[totalPacketID] = packet;
+				totalPacketID++;
+
+			}
 		}
 	}
 
@@ -203,12 +201,19 @@ void ServerManager::DisconnectClient()
 		input->Read(integer, 32);
 		if (it->second->ServerSalt == *integer) {
 			for (auto i = clients.begin(); i != clients.end(); i++) {
-				OutputMemoryBitStream message;
-				message.Write(static_cast<int>(Message_Protocol::ENDR), 32);
-				message.Write(i->second->ClientSalt, 32);
-				message.Write(i->second->ServerSalt, 32);
-				sock.Send(message, i->second->IpClient, i->second->PortClient);
+				OutputMemoryBitStream *message = new OutputMemoryBitStream();
+				message->Write(static_cast<int>(Message_Protocol::DISCONNECTED), 32);
+				message->Write(i->second->ClientSalt, 32);
+				message->Write(i->second->ServerSalt, 32);
+				message->Write(totalPacketID, 32);
+				sock.Send(*message, i->second->IpClient, i->second->PortClient);
+				// Adds packet to criticalMap
+				CriticalPacket* packet = new CriticalPacket(message, it->second->PortClient, it->second->ClientSalt, it->second->ServerSalt);
+				packets[totalPacketID] = packet;
+				totalPacketID++;
+
 			}
+			
 			// Deletes client data
 			clients.erase(it);
 		}
@@ -248,10 +253,42 @@ void ServerManager::ErasePacket()
 
 }
 
+void ServerManager::Accumulate()
+{
+	int clientSalt, serverSalt, idPlayer, idMove, posX, posY;
+	input->Read(&clientSalt, 32);
+	input->Read(&serverSalt, 32);
+	input->Read(&idPlayer, 32);
+	input->Read(&idMove, 32);
+	input->Read(&posX, 32);
+	input->Read(&posY, 32);
+	auto it = clients.find(idPlayer);
+	if (it != clients.end()) {
+		if (it->second->ClientSalt == clientSalt && it->second->ServerSalt == serverSalt) {
+			if (it->second->moveId < idMove) {
+				// 
+				if (posX >= W_NUM_TILES)
+					posX = W_NUM_TILES - 1;
+				else if (posX < 0)
+					posX = 0;
+				if (posY >= H_NUM_TILES)
+					posY = H_NUM_TILES - 1;
+				else if (posY < 0)
+					posY = 0;
+				it->second->x = posX;
+				it->second->y = posY;
+				
+			}
+		}
+	}
+}
+
 UDPSocket ServerManager::GetSocket()
 {
 	return sock;
 }
+
+
 
 bool ServerManager::IsNewPlayer(std::string ip, Port port, uint32_t clientSalt)
 {

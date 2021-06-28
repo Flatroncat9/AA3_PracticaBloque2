@@ -143,6 +143,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AccumMove.h" />
     <ClInclude Include="InputMemoryBitStream.h" />
     <ClInclude Include="InputMemoryStream.h" />
     <ClInclude Include="OutputMemoryBitStream.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AccumMove.cpp" />
     <ClCompile Include="PlayerInfo.cpp" />
     <ClCompile Include="UDPSocket.cpp" />
   </ItemGroup>

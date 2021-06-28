@@ -38,7 +38,7 @@
 // waits for welcome, but if he receive again the challenge he sends the challengeRespons again untel recieve Welcome_id
 // when receive Welocome_id player sets is id and wait for other players
 
-void SendMessage(ClientManager& thisClient) {
+void SendMessage(ClientManager* thisClient) {
 	std::string msg;
 
 	while (true) {
@@ -48,37 +48,44 @@ void SendMessage(ClientManager& thisClient) {
 
 		if (msg == "exit" || msg == "EXIT") {
 			oms.Write(static_cast<int>(Message_Protocol::END), 32);
-			oms.Write(thisClient.serverInfo.ClientSalt, 32);
-			oms.Write(thisClient.serverInfo.ServerSalt, 32);
-			thisClient.sock.Send(oms, thisClient.serverInfo.IpServer, thisClient.serverInfo.PortServer);
-			thisClient.onLoop = false;
+			oms.Write(thisClient->serverInfo.ClientSalt, 32);
+			oms.Write(thisClient->serverInfo.ServerSalt, 32);
+			thisClient->sock.Send(oms, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
+			thisClient->onLoop = false;
 			break;
 		}
 		oms.Write(static_cast<int>(Message_Protocol::MESSAGE), 32);
 		oms.WriteString(msg, 8);
-		thisClient.sock.Send(oms, thisClient.serverInfo.IpServer, thisClient.serverInfo.PortServer);
+		thisClient->sock.Send(oms, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
 	}
 }
 
-void ReceiveMessages(ClientManager& thisClient) {
+void ReceiveMessages(ClientManager* thisClient) {
     // Receive messages
-    while (thisClient.onLoop) {
+    while (thisClient->onLoop) {
         InputMemoryBitStream* input;
 
-        Status s = thisClient.sock.Receive(input, thisClient.serverInfo.IpServer, thisClient.serverInfo.PortServer);
+        Status s = thisClient->sock.Receive(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
         if (s == Status::Done)
-            thisClient.ManageMessageReceived(input, thisClient.serverInfo.IpServer, thisClient.serverInfo.PortServer);
+            thisClient->ManageMessageReceived(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
 
     }
 }
 
-void DrawDungeon(ClientManager& thisClient)
+void SendMovement(ClientManager* thisClient) {
+    while (thisClient->onLoop) {
+        thisClient->SendAccum();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+void DrawDungeon(ClientManager* thisClient)
 {
     sf::RenderWindow _window(sf::VideoMode(800, 600), "Ventanita");
     sf::RectangleShape shape(sf::Vector2f(SIZE, SIZE));
     shape.setOutlineColor(sf::Color::Black);
     shape.setOutlineThickness(2.f);
-    while (_window.isOpen())
+    while (_window.isOpen() && thisClient->onLoop)
     {
         sf::Event event;
         bool playerMoved = false;
@@ -97,18 +104,22 @@ void DrawDungeon(ClientManager& thisClient)
                 if (event.key.code == sf::Keyboard::Left)
                 {
                     std::cout << "LEFT\n";
+                    thisClient->AddAccum(-1,0);
                 }
                 else if (event.key.code == sf::Keyboard::Up)
                 {
                     std::cout << "UP\n";
+                    thisClient->AddAccum(0, -1);
                 }
                 else if (event.key.code == sf::Keyboard::Right)
                 {
                     std::cout << "RIGTH\n";
+                    thisClient->AddAccum(1, 0);
                 }
                 else if (event.key.code == sf::Keyboard::Down)
                 {
                     std::cout << "DOWN\n";
+                    thisClient->AddAccum(0, 1);
                 }
                 break;
             }
@@ -128,8 +139,7 @@ void DrawDungeon(ClientManager& thisClient)
         }
 
         sf::Vector2f position;
-        position.x = thisClient.serverInfo.x; position.y = thisClient.serverInfo.x;
-        std::cout << thisClient.serverInfo.x << " " << thisClient.serverInfo.y << std::endl;
+        position.x = thisClient->serverInfo.x; position.y = thisClient->serverInfo.x;
         shape.setFillColor(sf::Color::Blue);
         shape.setFillColor(sf::Color(0, 0, 255, 255));
         shape.setPosition(sf::Vector2f(position.x * SIZE, position.y * SIZE));
@@ -138,8 +148,8 @@ void DrawDungeon(ClientManager& thisClient)
 
         shape.setFillColor(sf::Color::Green);
         shape.setFillColor(sf::Color(255, 255, 0, 255));
-        for (int i = 0; i < thisClient.enemyPos.size(); i++) {
-            position.x = thisClient.enemyPos[i].first; position.y = thisClient.enemyPos[i].second;
+        for (int i = 0; i < thisClient->enemyPos.size(); i++) {
+            position.x = thisClient->enemyPos[i].first; position.y = thisClient->enemyPos[i].second;
             shape.setPosition(sf::Vector2f(position.x * SIZE, position.y * SIZE));
             _window.draw(shape);
         }
@@ -151,31 +161,36 @@ void DrawDungeon(ClientManager& thisClient)
 
 int main()
 {
-	ClientManager thisClient;
+	ClientManager* thisClient = new ClientManager();
 	auto initProgram = std::chrono::system_clock::now();
 	auto lastMessageSent = std::chrono::system_clock::now();
 	// Until not verified and received Welcome, sends HELLO every 0.2s
-	while(!thisClient.loggedIn) {
+	while(!thisClient->loggedIn) {
 		std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - lastMessageSent;
 		if (elapsed_seconds.count() > 0.2) {
-			thisClient.SendHello();
+			thisClient->SendHello();
 			lastMessageSent = std::chrono::system_clock::now();
 		}
 		InputMemoryBitStream* input;
 
-		Status s = thisClient.sock.Receive(input, thisClient.serverInfo.IpServer, thisClient.serverInfo.PortServer);
+		Status s = thisClient->sock.Receive(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
 		if (s == Status::Done)
-			thisClient.ManageMessageReceived(input, thisClient.serverInfo.IpServer, thisClient.serverInfo.PortServer);
+			thisClient->ManageMessageReceived(input, thisClient->serverInfo.IpServer, thisClient->serverInfo.PortServer);
 		elapsed_seconds = std::chrono::system_clock::now() - initProgram;
 		if (elapsed_seconds.count() > COUNTDOWN_CONNECT) {
 			std::cout << "You cannot connect to the server, try again\n";
 			return 1;
 		}
 	}
+
+    // Threads
 	std::thread t1(SendMessage, thisClient);
 	t1.detach();
 	
     std::thread t2(ReceiveMessages, thisClient);
+    t2.detach();
+
+    std::thread t3(SendMovement, thisClient);
     t2.detach();
 	
     DrawDungeon(thisClient);

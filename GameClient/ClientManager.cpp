@@ -9,6 +9,11 @@ ClientManager::ClientManager()
 	serverInfo.ClientSalt = rand() % UINT32_MAX;
 }
 
+int ClientManager::GetID()
+{
+	return myID;
+}
+
 bool ClientManager::CheckSalts(InputMemoryBitStream*& input)
 {
 	input->Read(integer, 32);
@@ -62,6 +67,33 @@ void ClientManager::Receive()
 	}
 }
 
+void ClientManager::AddAccum( int _x, int _y)
+{
+	serverInfo.accumX += _x;
+	serverInfo.accumY += _y;
+}
+
+void ClientManager::SendAccum()
+{
+	AccumMove aux;
+	aux.idMove = totalAccum;
+	aux.idPlayer = myID;
+	aux.x = serverInfo.accumX + serverInfo.x;
+	aux.y = serverInfo.accumY + serverInfo.y;
+	totalAccum++;
+	moves.push_back(aux);
+	
+	OutputMemoryBitStream oms;
+	oms.Write(static_cast<int>(Message_Protocol::MOVE), 32);
+	oms.Write(serverInfo.ClientSalt, 32);
+	oms.Write(serverInfo.ServerSalt, 32);
+	oms.Write(aux.idPlayer, 32);
+	oms.Write(aux.idMove, 32);
+	oms.Write(aux.x, 32);
+	oms.Write(aux.y, 32);
+	sock.Send(oms, serverInfo.IpServer, serverInfo.PortServer);
+}
+
 void ClientManager::SetPosition(int _x, int _y)
 {
 	serverInfo.x = _x;
@@ -78,6 +110,8 @@ void ClientManager::SendAck(InputMemoryBitStream*& input)
 	oms.Write(serverInfo.ServerSalt, 32);
 	oms.Write(packetID, 32);
 	sock.Send(oms, serverInfo.IpServer, serverInfo.PortServer);
+
+	// Saves enemy position to show in the map
 	int x, y;
 	input->Read(&x, 32);
 	input->Read(&y, 32);
@@ -101,6 +135,7 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 			loggedIn = true;
 			std::cout << "I've received a Welcome\n";
 			int x, y;
+			input->Read(&myID, 32);
 			input->Read(&x, 32);
 			input->Read(&y, 32);
 			SetPosition(x,y);
@@ -113,7 +148,7 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 			SendAck(input);
 		}
 		break;
-	case Message_Protocol::DISCONNECTED:
+	case Message_Protocol::ENDR:
 		if (CheckSalts(input)) {
 			std::cout << "You've been disconnected for inactivity\n";
 			onLoop = false;
@@ -130,8 +165,10 @@ void ClientManager::ManageMessageReceived(InputMemoryBitStream*& input, std::str
 		}
 		break;
 
-	case Message_Protocol::ENDR:
+	case Message_Protocol::DISCONNECTED:
 		if(CheckSalts(input))
+			// TODO : enviar ACK
+			// Recibir packetID
 			std::cout << "A Client has disconnected\n";
 		break;
 
